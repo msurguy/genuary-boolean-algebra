@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Boolean Mask Compositor by Maks Surguy</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.75);
+      padding: 16px;
+      border-radius: 8px;
+      color: #fff;
+      min-width: 260px;
+      max-height: calc(100vh - 20px);
+      overflow-y: auto;
+    }
+    #controls label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 10px 0;
+      font-size: 13px;
+    }
+    #controls select, #controls input[type="range"] {
+      margin-left: 12px;
+      flex: 1;
+      max-width: 140px;
+    }
+    #controls select {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #555;
+      background: #222;
+      color: #fff;
+    }
+    #controls select optgroup {
+      background: #333;
+      color: #888;
+      font-style: normal;
+      font-weight: bold;
+      padding: 4px 0;
+    }
+    #controls select option {
+      background: #222;
+      color: #fff;
+      padding: 4px 8px;
+    }
+    #controls input[type="range"] {
+      cursor: pointer;
+    }
+    #thresholdValue {
+      min-width: 36px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .operator-hint {
+      font-size: 11px;
+      color: #888;
+      margin-top: -6px;
+      margin-bottom: 8px;
+      padding-left: 4px;
+    }
+    .button-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    #controls button {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      background: #444;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+    #controls button:hover {
+      background: #555;
+    }
+    #controls button:active {
+      background: #666;
+    }
+    #captureWebcam {
+      display: none;
+    }
+    .pattern-params {
+      margin-top: 12px;
+      border-top: 1px solid #444;
+      padding-top: 10px;
+    }
+    .params-section {
+      margin-bottom: 10px;
+    }
+    .params-section:empty, .params-section:has(> .params-content:empty) {
+      display: none;
+    }
+    .params-title {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .params-content label {
+      margin: 6px 0;
+    }
+    .param-value {
+      min-width: 40px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
+    }
+    #loading {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 20px 40px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 100;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-a7dd24dc.js"></script>
+</head>
+<body>
+  <div id="loading">Generating pattern...</div>
+  <div id="controls">
+    <label>Pattern A:
+      <select id="patternA">
+        <optgroup label="Basic">
+          <option value="noise">Random Noise</option>
+        </optgroup>
+        <optgroup label="Classic Noise">
+          <option value="perlin">Perlin</option>
+          <option value="simplex" selected>Simplex</option>
+          <option value="value">Value</option>
+        </optgroup>
+        <optgroup label="Advanced Noise">
+          <option value="ridged">Ridged</option>
+          <option value="pingpong">PingPong</option>
+          <option value="domainwarp">Domain Warp</option>
+        </optgroup>
+        <optgroup label="Cellular">
+          <option value="voronoi">Voronoi/Cellular</option>
+        </optgroup>
+        <optgroup label="Procedural">
+          <option value="flowfield">Flow Field</option>
+          <option value="dla">DLA (Organic)</option>
+        </optgroup>
+        <optgroup label="Input">
+          <option value="webcam">Webcam</option>
+        </optgroup>
+      </select>
+    </label>
+    <label>Pattern B:
+      <select id="patternB">
+        <optgroup label="Basic">
+          <option value="noise">Random Noise</option>
+        </optgroup>
+        <optgroup label="Classic Noise">
+          <option value="perlin">Perlin</option>
+          <option value="simplex">Simplex</option>
+          <option value="value">Value</option>
+        </optgroup>
+        <optgroup label="Advanced Noise">
+          <option value="ridged">Ridged</option>
+          <option value="pingpong">PingPong</option>
+          <option value="domainwarp">Domain Warp</option>
+        </optgroup>
+        <optgroup label="Cellular">
+          <option value="voronoi" selected>Voronoi/Cellular</option>
+        </optgroup>
+        <optgroup label="Procedural">
+          <option value="flowfield">Flow Field</option>
+          <option value="dla">DLA (Organic)</option>
+        </optgroup>
+        <optgroup label="Input">
+          <option value="webcam">Webcam</option>
+        </optgroup>
+      </select>
+    </label>
+    <label>Operator:
+      <select id="operator">
+        <option value="AND">AND</option>
+        <option value="OR">OR</option>
+        <option value="XOR">XOR</option>
+        <option value="NOT_A">NOT A</option>
+      </select>
+    </label>
+    <div id="operatorHint" class="operator-hint">Intersection - precise, sparse</div>
+    <label>Threshold:
+      <input type="range" id="threshold" min="0" max="1" step="0.01" value="0.5">
+      <span id="thresholdValue">0.50</span>
+    </label>
+    <label id="webcamModeWrap">Webcam Mode:
+      <select id="webcamMode">
+        <option value="snapshot" selected>Snapshot</option>
+        <option value="live">Live</option>
+      </select>
+    </label>
+
+    <div class="pattern-params">
+      <div class="params-section" id="paramsA">
+        <div class="params-title">Pattern A Settings</div>
+        <div class="params-content" id="paramsAContent"></div>
+      </div>
+      <div class="params-section" id="paramsB">
+        <div class="params-title">Pattern B Settings</div>
+        <div class="params-content" id="paramsBContent"></div>
+      </div>
+    </div>
+
+    <div class="pattern-params">
+      <div class="params-section" id="paramsExtrude">
+        <div class="params-title">3D Layer Settings</div>
+        <div class="params-content" id="paramsExtrudeContent"></div>
+      </div>
+      <div class="params-section" id="params3D">
+        <div class="params-title">3D Animation</div>
+        <div class="params-content" id="params3DContent"></div>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button id="regenerate">Regenerate</button>
+      <button id="captureWebcam">Capture</button>
+      <button id="export">Export PNG</button>
+    </div>
+  </div>
+  
+</body>
+</html>

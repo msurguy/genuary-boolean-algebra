@@ -129,12 +129,36 @@
       font-size: 14px;
       z-index: 100;
     }
+    .panel-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #444;
+    }
+    .panel-header h1 {
+      margin: 0 0 6px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .panel-header a {
+      font-size: 12px;
+      color: #888;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .panel-header a:hover {
+      color: #fff;
+    }
   </style>
-  <script type="module" crossorigin src="/assets/index-5701221d.js"></script>
+  <script type="module" crossorigin src="/genuary-boolean-algebra/assets/index-5701221d.js"></script>
 </head>
 <body>
   <div id="loading">Generating pattern...</div>
   <div id="controls">
+    <div class="panel-header">
+      <h1>Boolean Mask Compositor</h1>
+      <a href="https://github.com/msurguy/genuary-boolean-algebra" target="_blank" rel="noopener">View Source</a>
+    </div>
     <label>Pattern A:
       <select id="patternA">
         <optgroup label="Basic">

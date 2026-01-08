@@ -1,0 +1,17 @@
+{
+  "name": "boolean-mask-compositor",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "fastnoise-lite": "^1.1.1",
+    "pixi.js": "^7.0.0",
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0"
+  }
+}

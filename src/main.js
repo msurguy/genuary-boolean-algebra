@@ -98,7 +98,7 @@ const PATTERN_CONFIG = {
 };
 
 const extrudeParams = {
-  layers: { label: "Layers", min: 1, max: 60, step: 1, default: 18 },
+  layers: { label: "Layers", min: 1, max: 200, step: 1, default: 18 },
   layerSpacing: { label: "Layer Spacing", min: 0.01, max: 0.3, step: 0.01, default: 0.05 },
   alpha: { label: "Alpha", min: 0, max: 1, step: 0.01, default: 1 },
   alphaFalloff: { label: "Alpha Falloff", min: 0.5, max: 1, step: 0.01, default: 0.95 },

@@ -43,10 +43,10 @@ export function generateOpenSimplex2(app, renderTexture, params = {}) {
 // Ridged Noise (mountain-like)
 // ============================================
 export const ridgedParams = {
-  frequency: { label: 'Frequency', min: 0.001, max: 0.05, step: 0.001, default: 0.008 },
-  octaves: { label: 'Octaves', min: 1, max: 8, step: 1, default: 5 },
+  frequency: { label: 'Frequency', min: 0.001, max: 0.05, step: 0.001, default: 0.003},
+  octaves: { label: 'Octaves', min: 1, max: 8, step: 1, default: 1 },
   lacunarity: { label: 'Lacunarity', min: 1, max: 4, step: 0.1, default: 2 },
-  gain: { label: 'Gain', min: 0.1, max: 1, step: 0.05, default: 0.5 },
+  gain: { label: 'Gain', min: 0.1, max: 1, step: 0.05, default: 0.3 },
   seed: { label: 'Seed', min: 1, max: 9999, step: 1, default: 1337 }
 };
 

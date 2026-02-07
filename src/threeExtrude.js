@@ -13,14 +13,14 @@ function isCanvas(value) {
 
 // Settings state
 let currentSettings = {
-  layers: 18,
-  layerSpacing: 0.05,
+  layers: 60,
+  layerSpacing: 0.04,
   scaleX: 2,
   scaleY: 2,
   alpha: 1.0,
-  alphaFalloff: 0.95,
-  tintStart: 0xffffff,
-  tintEnd: 0xffffff,
+  alphaFalloff: 0.91,
+  tintStart: 0x33ffff,
+  tintEnd: 0xff66cc,
   transparentBlack: true,
   transparentWhite: false,
   blackThreshold: 0.1,
@@ -31,7 +31,7 @@ let currentSettings = {
 let animationState = {
   enabled: true,
   mode: 'wave',
-  speed: 1.0,
+  speed: 0.4,
   amplitude: 0.1
 };
 

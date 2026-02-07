@@ -98,7 +98,7 @@ const PATTERN_CONFIG = {
 };
 
 const extrudeParams = {
-  layers: { label: "Layers", min: 1, max: 200, step: 1, default: 18 },
+  layers: { label: "Layers", min: 1, max: 200, step: 1, default: 60 },
   layerSpacing: { label: "Layer Spacing", min: 0.01, max: 0.3, step: 0.01, default: 0.05 },
   alpha: { label: "Alpha", min: 0, max: 1, step: 0.01, default: 1 },
   alphaFalloff: { label: "Alpha Falloff", min: 0.5, max: 1, step: 0.01, default: 0.95 },
@@ -106,12 +106,12 @@ const extrudeParams = {
   blackThreshold: { label: "Black Threshold", min: 0, max: 0.5, step: 0.01, default: 0.1 },
   transparentWhite: { label: "Transparent White", type: "boolean", default: false },
   whiteThreshold: { label: "White Threshold", min: 0.5, max: 1, step: 0.01, default: 0.9 },
-  tintStartR: { label: "Tint Start R", min: 0, max: 255, step: 1, default: 255 },
-  tintStartG: { label: "Tint Start G", min: 0, max: 255, step: 1, default: 255 },
+  tintStartR: { label: "Tint Start R", min: 0, max: 255, step: 1, default: 219 },
+  tintStartG: { label: "Tint Start G", min: 0, max: 255, step: 1, default: 169 },
   tintStartB: { label: "Tint Start B", min: 0, max: 255, step: 1, default: 255 },
-  tintEndR: { label: "Tint End R", min: 0, max: 255, step: 1, default: 255 },
-  tintEndG: { label: "Tint End G", min: 0, max: 255, step: 1, default: 255 },
-  tintEndB: { label: "Tint End B", min: 0, max: 255, step: 1, default: 255 }
+  tintEndR: { label: "Tint End R", min: 0, max: 255, step: 1, default: 130 },
+  tintEndG: { label: "Tint End G", min: 0, max: 255, step: 1, default: 193 },
+  tintEndB: { label: "Tint End B", min: 0, max: 255, step: 1, default: 94 }
 };
 
 const animation3DParams = {

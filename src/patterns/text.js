@@ -1,8 +1,7 @@
 import * as PIXI from "pixi.js";
-import { GOOGLE_FONT_FAMILIES } from "../data/googleFontFamilies.js";
 
 const CANVAS_SIZE = 1024;
-const SYSTEM_FONT_NAME = "System Sans";
+const SYSTEM_FONT_NAME = "Arial";
 const SYSTEM_FONT_STACK = "system-ui, -apple-system, sans-serif";
 
 const textCanvas = document.createElement("canvas");
@@ -12,29 +11,11 @@ const textContext = textCanvas.getContext("2d");
 const textTexture = PIXI.Texture.from(textCanvas);
 const textSprite = new PIXI.Sprite(textTexture);
 
-let fontCatalog = normalizedCatalog(GOOGLE_FONT_FAMILIES);
 const googleFontLoadPromises = new Map();
 const loadedGoogleFonts = new Set();
 
 function normalizeSingleLine(value) {
   return String(value ?? "").replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function normalizedCatalog(names) {
-  const deduped = new Set([SYSTEM_FONT_NAME]);
-  names.forEach((name) => {
-    const normalized = normalizeSingleLine(name);
-    if (normalized && normalized !== SYSTEM_FONT_NAME) {
-      deduped.add(normalized);
-    }
-  });
-
-  const all = Array.from(deduped);
-  const head = all.filter((name) => name === SYSTEM_FONT_NAME);
-  const tail = all
-    .filter((name) => name !== SYSTEM_FONT_NAME)
-    .sort((a, b) => a.localeCompare(b));
-  return [...head, ...tail];
 }
 
 export const textParams = {
@@ -59,11 +40,6 @@ function sanitizeFontName(fontName) {
   return normalized || textParams.font.default;
 }
 
-function isCatalogFont(fontName) {
-  const target = sanitizeFontName(fontName).toLowerCase();
-  return fontCatalog.some((item) => item.toLowerCase() === target);
-}
-
 function resolveFontFamily(fontName) {
   if (fontName === SYSTEM_FONT_NAME) {
     return SYSTEM_FONT_STACK;
@@ -76,12 +52,7 @@ function toGoogleFamilyParam(fontName) {
   return encodeURIComponent(fontName).replace(/%20/g, "+");
 }
 
-export function getTextFontSuggestions() {
-  return fontCatalog;
-}
-
 export function initTextFontCatalog(onUpdate) {
-  fontCatalog = normalizedCatalog(GOOGLE_FONT_FAMILIES);
   if (typeof onUpdate === "function") {
     onUpdate();
   }
@@ -90,10 +61,6 @@ export function initTextFontCatalog(onUpdate) {
 export function ensureTextFontLoaded(fontName) {
   const resolvedName = sanitizeFontName(fontName);
   if (resolvedName === SYSTEM_FONT_NAME || !document?.head) {
-    return Promise.resolve();
-  }
-
-  if (!isCatalogFont(resolvedName)) {
     return Promise.resolve();
   }
 

@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
-import typeahead from "typeahead-standalone";
-import "typeahead-standalone/dist/basic.css";
+import FontPicker from "fontpicker/dist/fontpicker.min.js";
+import "./fontpicker.css";
 import { generateNoise, noiseParams } from "./patterns/noise.js";
 import { generateVoronoi, voronoiParams } from "./patterns/voronoi.js";
 import { generatePerlin, perlinParams } from "./patterns/perlin.js";
@@ -11,7 +11,6 @@ import { initWebcam, renderWebcamToTexture, stopWebcam, isWebcamActive } from ".
 import {
   ensureTextFontLoaded,
   generateText,
-  getTextFontSuggestions,
   initTextFontCatalog,
   textParams
 } from "./patterns/text.js";
@@ -137,6 +136,11 @@ const current3DParams = { animSpeed: 1, animAmplitude: 0.1 };
 let currentAnimMode = 'wave';
 let currentWebcamMode = webcamModeEl ? webcamModeEl.value : 'snapshot';
 let webcamCapturePending = false;
+const fontPickersByContainer = new WeakMap();
+const FONT_PICKER_DEFAULT_FAMILY = "Arial";
+const LEGACY_FONT_NAME_MAP = {
+  "System Sans": FONT_PICKER_DEFAULT_FAMILY
+};
 
 // Operator hints
 const OPERATOR_HINTS = {
@@ -177,8 +181,29 @@ function updateOperatorHint() {
   operatorHintEl.textContent = OPERATOR_HINTS[operatorEl.value] || "";
 }
 
+function normalizeFontForPicker(fontName) {
+  const normalized = String(fontName ?? "").trim();
+  if (!normalized) {
+    return FONT_PICKER_DEFAULT_FAMILY;
+  }
+
+  return LEGACY_FONT_NAME_MAP[normalized] || normalized;
+}
+
 // Build parameter UI for a pattern
 function buildParamsUI(patternType, container, currentParams, onChange) {
+  const existingPickers = fontPickersByContainer.get(container);
+  if (existingPickers) {
+    existingPickers.forEach((picker) => {
+      try {
+        picker.destroy();
+      } catch {
+        // Ignore cleanup errors from detached instances.
+      }
+    });
+    fontPickersByContainer.delete(container);
+  }
+
   container.innerHTML = "";
   const config = PATTERN_CONFIG[patternType];
 
@@ -268,16 +293,8 @@ function buildParamSliders(paramDefs, container, currentParams, onChange) {
     }
 
     if (def.type === "font") {
-      const fontOptions = getTextFontSuggestions();
-      const fontLookup = new Map(fontOptions.map((fontName) => [fontName.toLowerCase(), fontName]));
       const defaultFont = String(def.default ?? "");
-      const currentFontRaw = String(currentParams[key] ?? defaultFont);
-      const currentFont =
-        fontLookup.get(currentFontRaw.toLowerCase()) ||
-        fontLookup.get(defaultFont.toLowerCase()) ||
-        fontOptions[0] ||
-        defaultFont;
-
+      const currentFont = normalizeFontForPicker(currentParams[key] ?? defaultFont);
       currentParams[key] = currentFont;
 
       const input = document.createElement("input");
@@ -288,126 +305,62 @@ function buildParamSliders(paramDefs, container, currentParams, onChange) {
       input.style.marginLeft = "12px";
       input.style.maxWidth = "180px";
       input.style.width = "180px";
+      input.readOnly = true;
 
       label.style.alignItems = "flex-start";
 
-      const getSuggestionValue = (suggestion) => {
-        if (typeof suggestion === "string") {
-          return suggestion;
-        }
-
-        if (suggestion && typeof suggestion === "object") {
-          if (typeof suggestion.label === "string") {
-            return suggestion.label;
-          }
-          if (typeof suggestion.value === "string") {
-            return suggestion.value;
-          }
-        }
-
-        return "";
-      };
-
       const commitFont = (candidate) => {
-        const normalized = String(candidate ?? "").trim().toLowerCase();
+        const normalized = String(candidate ?? "").trim();
         if (!normalized) {
           return false;
         }
 
-        const canonical = fontLookup.get(normalized);
-        if (!canonical) {
-          return false;
-        }
-
-        if (currentParams[key] !== canonical) {
-          currentParams[key] = canonical;
+        if (currentParams[key] !== normalized) {
+          currentParams[key] = normalized;
           onChange();
         }
 
+        input.value = currentParams[key];
         return true;
       };
-
-      input.addEventListener("input", () => {
-        const sanitized = input.value.replace(/[\r\n]+/g, " ").trimStart();
-        if (sanitized !== input.value) {
-          input.value = sanitized;
-        }
-        commitFont(input.value);
-      });
-
-      input.addEventListener("change", () => {
-        if (!commitFont(input.value)) {
-          input.value = currentParams[key];
-        }
-      });
 
       label.appendChild(input);
       container.appendChild(label);
 
-      typeahead({
-        input,
-        source: {
-          local: fontOptions
-        },
-        minLength: 0,
-        limit: 12,
-        hint: false,
-        autoSelect: false,
-        templates: {
-          empty: () => fontOptions
-        },
-        display: (selectedItem) => {
-          const selectedFont = getSuggestionValue(selectedItem);
-          return selectedFont || currentParams[key];
-        },
-        onSubmit: (_event, selectedItem) => {
-          const selectedFont = getSuggestionValue(selectedItem) || input.value;
-          if (commitFont(selectedFont)) {
-            input.value = currentParams[key];
-          }
+      const picker = new FontPicker(input, {
+        variants: false,
+        verbose: false,
+        showClearButton: false,
+        showCancelButton: true,
+        defaultSearch: "",
+        defaultSubset: "all",
+        defaultCategories: ["display", "handwriting", "monospace", "sans-serif", "serif"],
+        sortBy: "popularity",
+        sortReverse: false
+      });
+
+      picker.on("pick", (font) => {
+        const fontName = font?.family?.name ?? "";
+        if (!fontName) {
+          return;
         }
+        commitFont(normalizeFontForPicker(fontName));
       });
 
       input.addEventListener("focus", () => {
-        const currentFontOnFocus = currentParams[key];
-        input.value = "";
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-
-        requestAnimationFrame(() => {
-          const wrapper = input.closest(".typeahead-standalone");
-          const list = wrapper ? wrapper.querySelector(".tt-list") : null;
-          if (!list) {
-            input.value = currentFontOnFocus;
-            return;
-          }
-
-          const suggestions = Array.from(list.querySelectorAll(".tt-suggestion"));
-          suggestions.forEach((el) => {
-            el.classList.remove("tt-selected");
-            el.setAttribute("aria-selected", "false");
-          });
-
-          const target = suggestions.find(
-            (el) => (el.textContent || "").trim() === currentFontOnFocus
-          );
-
-          if (target) {
-            target.classList.add("tt-selected");
-            target.setAttribute("aria-selected", "true");
-            target.scrollIntoView({ block: "nearest", inline: "nearest" });
-          }
-
-          input.value = currentFontOnFocus;
-        });
+        picker.open();
       });
 
-      input.addEventListener("blur", () => {
-        requestAnimationFrame(() => {
-          if (!input.value.trim()) {
-            input.value = currentParams[key];
-          }
-        });
-      });
+      try {
+        picker.setFont(currentFont);
+      } catch {
+        picker.setFont(FONT_PICKER_DEFAULT_FAMILY);
+        commitFont(FONT_PICKER_DEFAULT_FAMILY);
+      }
+
+      const pickers = fontPickersByContainer.get(container) ?? [];
+      pickers.push(picker);
+      fontPickersByContainer.set(container, pickers);
 
       continue;
     }

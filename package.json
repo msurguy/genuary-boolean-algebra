@@ -8,10 +8,9 @@
   },
   "dependencies": {
     "fastnoise-lite": "^1.1.1",
-    "google-fonts-complete": "^2.2.3",
+    "fontpicker": "github:wipeautcrafter/jsfontpicker",
     "pixi.js": "^7.0.0",
-    "three": "^0.182.0",
-    "typeahead-standalone": "^5.4.0"
+    "three": "^0.182.0"
   },
   "devDependencies": {
     "vite": "^4.0.0"

@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <title>Boolean Mask Compositor by Maks Surguy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <style>
       body {
         margin: 0;
@@ -33,12 +35,20 @@
         font-size: 13px;
       }
       #controls select,
-      #controls input[type="range"] {
+      #controls input[type="range"],
+      #controls input[type="text"] {
         margin-left: 12px;
         flex: 1;
         max-width: 140px;
       }
       #controls select {
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid #555;
+        background: #222;
+        color: #fff;
+      }
+      #controls input[type="text"] {
         padding: 4px 8px;
         border-radius: 4px;
         border: 1px solid #555;
@@ -142,6 +152,7 @@
         margin-bottom: 16px;
         padding-bottom: 12px;
         border-bottom: 1px solid #444;
+        font-size: 12px;
       }
       .panel-header h1 {
         margin: 0 0 6px 0;
@@ -159,7 +170,8 @@
         color: #fff;
       }
     </style>
-    <script type="module" crossorigin src="/labs/boolean-algebra/assets/index-9f67f4a0.js"></script>
+    <script type="module" crossorigin src="/labs/boolean-algebra/assets/index-c2cb66ba.js"></script>
+    <link rel="stylesheet" href="/labs/boolean-algebra/assets/index-164d044e.css">
   </head>
   <body>
     <div id="loading">Generating pattern...</div>
@@ -170,8 +182,8 @@
           href="https://github.com/msurguy/genuary-boolean-algebra"
           target="_blank"
           rel="noopener"
-          >View Source</a
-        >
+          >View Source</a> | 
+        made by <a href="https://makssurguy.com" target="_blank">Maks Surguy</a>
       </div>
       <label
         >Pattern A:
@@ -197,6 +209,7 @@
             <option value="dla">DLA (Organic)</option>
           </optgroup>
           <optgroup label="Input">
+            <option value="text">Text</option>
             <option value="webcam">Webcam</option>
           </optgroup>
         </select>
@@ -225,6 +238,7 @@
             <option value="dla">DLA (Organic)</option>
           </optgroup>
           <optgroup label="Input">
+            <option value="text">Text</option>
             <option value="webcam">Webcam</option>
           </optgroup>
         </select>

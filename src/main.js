@@ -1,4 +1,6 @@
 import * as PIXI from "pixi.js";
+import typeahead from "typeahead-standalone";
+import "typeahead-standalone/dist/basic.css";
 import { generateNoise, noiseParams } from "./patterns/noise.js";
 import { generateVoronoi, voronoiParams } from "./patterns/voronoi.js";
 import { generatePerlin, perlinParams } from "./patterns/perlin.js";
@@ -6,6 +8,13 @@ import { generateSimplex, simplexParams } from "./patterns/simplex.js";
 import { generateFlowfield, flowfieldParams } from "./patterns/flowfield.js";
 import { generateDLA, dlaParams } from "./patterns/dla.js";
 import { initWebcam, renderWebcamToTexture, stopWebcam, isWebcamActive } from "./patterns/webcam.js";
+import {
+  ensureTextFontLoaded,
+  generateText,
+  getTextFontSuggestions,
+  initTextFontCatalog,
+  textParams
+} from "./patterns/text.js";
 import { applyBoolean } from "./booleanOps.js";
 
 // FastNoise-based patterns
@@ -94,6 +103,7 @@ const PATTERN_CONFIG = {
   dla: { generator: generateDLA, params: dlaParams },
 
   // Dynamic input
+  text: { generator: generateText, params: textParams, mode: "direct" },
   webcam: { generator: null, params: null }
 };
 
@@ -210,6 +220,195 @@ function buildParamSliders(paramDefs, container, currentParams, onChange) {
       label.appendChild(input);
       label.appendChild(valueSpan);
       container.appendChild(label);
+      continue;
+    }
+
+    if (def.type === "text") {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = String(currentParams[key] ?? "");
+      input.dataset.paramKey = key;
+      input.maxLength = def.maxLength ?? 120;
+
+      input.addEventListener("input", () => {
+        const sanitized = input.value.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ");
+        if (sanitized !== input.value) {
+          input.value = sanitized;
+        }
+        currentParams[key] = sanitized;
+        onChange();
+      });
+
+      label.appendChild(input);
+      container.appendChild(label);
+      continue;
+    }
+
+    if (def.type === "select") {
+      const input = document.createElement("select");
+      const options = Array.isArray(def.options) ? def.options : [];
+
+      options.forEach((optionDef) => {
+        const option = document.createElement("option");
+        option.value = String(optionDef.value);
+        option.textContent = optionDef.label;
+        input.appendChild(option);
+      });
+
+      input.value = String(currentParams[key] ?? def.default ?? "");
+
+      input.addEventListener("change", () => {
+        currentParams[key] = input.value;
+        onChange();
+      });
+
+      label.appendChild(input);
+      container.appendChild(label);
+      continue;
+    }
+
+    if (def.type === "font") {
+      const fontOptions = getTextFontSuggestions();
+      const fontLookup = new Map(fontOptions.map((fontName) => [fontName.toLowerCase(), fontName]));
+      const defaultFont = String(def.default ?? "");
+      const currentFontRaw = String(currentParams[key] ?? defaultFont);
+      const currentFont =
+        fontLookup.get(currentFontRaw.toLowerCase()) ||
+        fontLookup.get(defaultFont.toLowerCase()) ||
+        fontOptions[0] ||
+        defaultFont;
+
+      currentParams[key] = currentFont;
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = currentFont;
+      input.maxLength = def.maxLength ?? 120;
+      input.placeholder = def.placeholder ?? "Search fonts";
+      input.style.marginLeft = "12px";
+      input.style.maxWidth = "180px";
+      input.style.width = "180px";
+
+      label.style.alignItems = "flex-start";
+
+      const getSuggestionValue = (suggestion) => {
+        if (typeof suggestion === "string") {
+          return suggestion;
+        }
+
+        if (suggestion && typeof suggestion === "object") {
+          if (typeof suggestion.label === "string") {
+            return suggestion.label;
+          }
+          if (typeof suggestion.value === "string") {
+            return suggestion.value;
+          }
+        }
+
+        return "";
+      };
+
+      const commitFont = (candidate) => {
+        const normalized = String(candidate ?? "").trim().toLowerCase();
+        if (!normalized) {
+          return false;
+        }
+
+        const canonical = fontLookup.get(normalized);
+        if (!canonical) {
+          return false;
+        }
+
+        if (currentParams[key] !== canonical) {
+          currentParams[key] = canonical;
+          onChange();
+        }
+
+        return true;
+      };
+
+      input.addEventListener("input", () => {
+        const sanitized = input.value.replace(/[\r\n]+/g, " ").trimStart();
+        if (sanitized !== input.value) {
+          input.value = sanitized;
+        }
+        commitFont(input.value);
+      });
+
+      input.addEventListener("change", () => {
+        if (!commitFont(input.value)) {
+          input.value = currentParams[key];
+        }
+      });
+
+      label.appendChild(input);
+      container.appendChild(label);
+
+      typeahead({
+        input,
+        source: {
+          local: fontOptions
+        },
+        minLength: 0,
+        limit: 12,
+        hint: false,
+        autoSelect: false,
+        templates: {
+          empty: () => fontOptions
+        },
+        display: (selectedItem) => {
+          const selectedFont = getSuggestionValue(selectedItem);
+          return selectedFont || currentParams[key];
+        },
+        onSubmit: (_event, selectedItem) => {
+          const selectedFont = getSuggestionValue(selectedItem) || input.value;
+          if (commitFont(selectedFont)) {
+            input.value = currentParams[key];
+          }
+        }
+      });
+
+      input.addEventListener("focus", () => {
+        const currentFontOnFocus = currentParams[key];
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+
+        requestAnimationFrame(() => {
+          const wrapper = input.closest(".typeahead-standalone");
+          const list = wrapper ? wrapper.querySelector(".tt-list") : null;
+          if (!list) {
+            input.value = currentFontOnFocus;
+            return;
+          }
+
+          const suggestions = Array.from(list.querySelectorAll(".tt-suggestion"));
+          suggestions.forEach((el) => {
+            el.classList.remove("tt-selected");
+            el.setAttribute("aria-selected", "false");
+          });
+
+          const target = suggestions.find(
+            (el) => (el.textContent || "").trim() === currentFontOnFocus
+          );
+
+          if (target) {
+            target.classList.add("tt-selected");
+            target.setAttribute("aria-selected", "true");
+            target.scrollIntoView({ block: "nearest", inline: "nearest" });
+          }
+
+          input.value = currentFontOnFocus;
+        });
+      });
+
+      input.addEventListener("blur", () => {
+        requestAnimationFrame(() => {
+          if (!input.value.trim()) {
+            input.value = currentParams[key];
+          }
+        });
+      });
+
       continue;
     }
 
@@ -366,7 +565,13 @@ async function renderPattern(patternType, renderTexture, params, options = {}) {
   } else {
     const config = PATTERN_CONFIG[patternType];
     if (config && config.generator) {
+      if (patternType === "text") {
+        await ensureTextFontLoaded(params?.font ?? textParams.font.default);
+      }
+
       if (config.mode === "shader") {
+        config.generator(app, renderTexture, params);
+      } else if (config.mode === "direct") {
         config.generator(app, renderTexture, params);
       } else {
         const g = new PIXI.Graphics();
@@ -528,6 +733,10 @@ updateParamsUI();
 updateExtrudeUI();
 update3DUI();
 renderPatterns();
+initTextFontCatalog(() => {
+  updateParamsUI();
+  renderPatterns();
+});
 
 // Start animation loop
 animate(0);

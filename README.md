@@ -206,6 +206,24 @@ npm run build
 npm run preview  # Preview the production build
 ```
 
+### Refreshing Google Fonts List (Font Picker)
+
+The app uses a local font picker package via `file:./jsfontpicker`.
+To refresh the bundled Google Fonts catalog (for newly added fonts like `Doto`):
+
+```bash
+cd jsfontpicker
+npm run update:google-fonts
+cd ..
+npm install
+```
+
+Then rebuild the app:
+
+```bash
+npm run build
+```
+
 ## Usage
 
 1. **Select Pattern A** and **Pattern B** from the dropdowns

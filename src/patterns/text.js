@@ -27,7 +27,9 @@ export const textParams = {
     maxLength: 120,
     placeholder: "Search Google Fonts"
   },
-  height: { label: "Height", min: 0.25, max: 2, step: 0.01, default: 1 }
+  height: { label: "Height", min: 0.25, max: 2, step: 0.01, default: 1 },
+  offsetX: { label: "Horizontal Position", min: -1, max: 1, step: 0.01, default: 0 },
+  offsetY: { label: "Vertical Position", min: -1, max: 1, step: 0.01, default: 0 }
 };
 
 function sanitizeSingleLine(text) {
@@ -130,6 +132,14 @@ export function generateText(app, renderTexture, params = {}) {
     textParams.height.max,
     Math.max(textParams.height.min, Number(params.height ?? textParams.height.default))
   );
+  const offsetX = Math.min(
+    textParams.offsetX.max,
+    Math.max(textParams.offsetX.min, Number(params.offsetX ?? textParams.offsetX.default))
+  );
+  const offsetY = Math.min(
+    textParams.offsetY.max,
+    Math.max(textParams.offsetY.min, Number(params.offsetY ?? textParams.offsetY.default))
+  );
   const padding = CANVAS_SIZE * 0.08;
   const maxWidth = CANVAS_SIZE - padding * 2;
   const maxHeight = CANVAS_SIZE - padding * 2;
@@ -160,7 +170,18 @@ export function generateText(app, renderTexture, params = {}) {
 
   const finalFontSize = Math.max(12, Math.floor(fontSize * heightScale));
   textContext.font = `700 ${finalFontSize}px ${fontFamily}`;
-  textContext.fillText(text, CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.5);
+  const finalMetrics = textContext.measureText(text);
+  const finalTextWidth = finalMetrics.width;
+  const finalTextHeight =
+    finalMetrics.actualBoundingBoxAscent + finalMetrics.actualBoundingBoxDescent || finalFontSize;
+
+  // Keep movement inside padded bounds so the full glyph area remains visible.
+  const availableShiftX = Math.max(0, (maxWidth - finalTextWidth) * 0.5);
+  const availableShiftY = Math.max(0, (maxHeight - finalTextHeight) * 0.5);
+  const drawX = CANVAS_SIZE * 0.5 + availableShiftX * offsetX;
+  const drawY = CANVAS_SIZE * 0.5 + availableShiftY * offsetY;
+
+  textContext.fillText(text, drawX, drawY);
 
   textTexture.baseTexture.update();
   app.renderer.render(textSprite, { renderTexture, clear: true });

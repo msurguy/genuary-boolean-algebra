@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "fastnoise-lite": "^1.1.1",
-    "fontpicker": "github:wipeautcrafter/jsfontpicker",
+    "fontpicker": "file:./jsfontpicker",
     "pixi.js": "^7.0.0",
     "three": "^0.182.0"
   },
